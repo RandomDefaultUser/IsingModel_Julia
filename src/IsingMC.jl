@@ -16,7 +16,11 @@ julia>
 
 module IsingMC
     # I don't want to deal with unitful constants right now
-    boltzmannConstant = 1.380649e-23
+    boltzmannConstant =  8.617333262e10-5
+    # Also, why not set it to one?
+#     boltzmannConstant = 1.0
+
+    using Statistics
     using Plots
         ####################
     # Definitions
@@ -75,26 +79,69 @@ module IsingMC
         end
     end
 
+    function getLocalHamiltonian(sim::MCSimulation, pointX, pointY)
+       thisPoint = sim.lattice[pointX,pointY]
+       localHamiltonian = 0.0
+        if pointX == 1
+            localHamiltonian += sim.lattice[sim.latticeSize, pointY]*thisPoint
+        else
+            localHamiltonian += sim.lattice[pointX-1, pointY]*thisPoint
+        end
+        if pointY == 1
+            localHamiltonian += sim.lattice[pointX, sim.latticeSize]*thisPoint
+        else
+            localHamiltonian += sim.lattice[pointX, pointY-1]*thisPoint
+        end
+        if pointX == sim.latticeSize
+            localHamiltonian += sim.lattice[1, pointY]*thisPoint
+        else
+            localHamiltonian += sim.lattice[pointX+1, pointY]*thisPoint
+        end
+        if pointY == sim.latticeSize
+            localHamiltonian += sim.lattice[pointX, 1]*thisPoint
+        else
+            localHamiltonian += sim.lattice[pointX, pointY+1]*thisPoint
+        end
+        return localHamiltonian
+    end
+
     # Time evolve one lattice.
     function timeEvolve(sim::MCSimulation)
-        lastEnergy = energyFromLattice(sim)
+        averagedEnergy = 0.0
+        energy = energyFromLattice(sim)
+        acceptedSteps = 1
         for step in 1:sim.stepsToEvolve
             # Determine which point in the lattice may be flipped.
-            posToFlip = rand(0:(sim.latticeSize*sim.latticeSize))
+            posToFlip = rand(0:((sim.latticeSize*sim.latticeSize)-1))
             xToFlip = posToFlip ÷ sim.latticeSize+1
             yToFlip = posToFlip % sim.latticeSize+1
             sim.lattice[xToFlip, yToFlip] *= -1
-            deltaE = energyFromLattice(sim) - lastEnergy
-#             println(xToFlip, " ", yToFlip, " ", deltaE, " ")
+
+            # Calculate change due to flip.
+            deltaE = -0.5*sim.interactionStrength*getLocalHamiltonian(sim, xToFlip, yToFlip)
+
+            # Determine whether the change should be accepted.
+            accepted = true
             if deltaE > 0.0
                 randomNumber = rand()
-                probability = exp(Float64(deltaE/(boltzmannConstant*sim.temperatureK)))
-                if probability >= randomNumber
-                    sim.lattice[xToFlip, yToFlip] *= -1
+                probability = exp(Float64(-1.0*deltaE/(boltzmannConstant*sim.temperatureK)))
+                if probability < randomNumber
+                    accepted = false
                 end
+            end
+
+            # If accepted, update the energy and
+            if accepted == true
+                energy = energyFromLattice(sim)
+                acceptedSteps += 1
+                averagedEnergy = ((averagedEnergy*(acceptedSteps-1))+energy)/acceptedSteps
+                println("Accepted step, energy is now: ", energy)
+            else
+               sim.lattice[xToFlip, yToFlip] *= -1
             end
 #             println(sim.lattice)
         end
+        return averagedEnergy
     end
 
     function energyFromLattice(sim::MCSimulation)
@@ -102,29 +149,7 @@ module IsingMC
         for i in 1:sim.latticeSize
             for j in 1:sim.latticeSize
                 # We assume periodic boundary conditions.
-                localHamiltonian = 0.0
-                thisPoint = sim.lattice[i,j]
-                if i == 1
-                    localHamiltonian += sim.lattice[sim.latticeSize, j]*thisPoint
-                else
-                    localHamiltonian += sim.lattice[i-1, j]*thisPoint
-                end
-                if j == 1
-                    localHamiltonian += sim.lattice[i, sim.latticeSize]*thisPoint
-                else
-                    localHamiltonian += sim.lattice[i, j-1]*thisPoint
-                end
-                if i == sim.latticeSize
-                    localHamiltonian += sim.lattice[1, j]*thisPoint
-                else
-                    localHamiltonian += sim.lattice[i+1, j]*thisPoint
-                end
-                if j == sim.latticeSize
-                    localHamiltonian += sim.lattice[i, 1]*thisPoint
-                else
-                    localHamiltonian += sim.lattice[i, j+1]*thisPoint
-                end
-                energy += localHamiltonian
+                energy += getLocalHamiltonian(sim, i, j)
             end
         end
         return -0.5*energy*sim.interactionStrength
@@ -135,7 +160,7 @@ module IsingMC
     # Tests
     ####################
 
-    newSim = MCSimulation(0.1, 20, 100000, 1000.0)
+    newSim = MCSimulation(2.0/boltzmannConstant, 20, 50000, 4.0)
     initialize(newSim)
     println(newSim)
     timeEvolve(newSim)

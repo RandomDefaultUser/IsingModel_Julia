@@ -21,8 +21,8 @@ module IsingMC
 #     boltzmannConstant = 1.0
 
     using Statistics
-    using Plots
-        ####################
+#     using Plots
+    ####################
     # Definitions
     ####################
     # Holds a single MC simulation.
@@ -135,11 +135,10 @@ module IsingMC
                 energy = energyFromLattice(sim)
                 acceptedSteps += 1
                 averagedEnergy = ((averagedEnergy*(acceptedSteps-1))+energy)/acceptedSteps
-                println("Accepted step, energy is now: ", energy)
+#                 println("Accepted step, energy is now: ", energy)
             else
                sim.lattice[xToFlip, yToFlip] *= -1
             end
-#             println(sim.lattice)
         end
         return averagedEnergy
     end
@@ -160,10 +159,20 @@ module IsingMC
     # Tests
     ####################
 
-    newSim = MCSimulation(2.0/boltzmannConstant, 20, 50000, 4.0)
-    initialize(newSim)
-    println(newSim)
-    timeEvolve(newSim)
-    println(newSim)
-    visualizeSim(newSim)
+#     newSim = MCSimulation(2.0/boltzmannConstant, 20, 50000, 4.0)
+#     initialize(newSim)
+#     println(newSim)
+#     timeEvolve(newSim)
+#     println(newSim)
+#     visualizeSim(newSim)
+    temperatures = range(0.5, 10.0, step=0.5)
+    for temp in temperatures
+        energies = []
+        newSim = MCSimulation(temp/boltzmannConstant, 20, 50000, 4.0)
+        initialize(newSim)
+        energy = timeEvolve(newSim)
+        append!(energies, energy)
+        println(temp, " ", energy)
+    end
+#     println(energies)
 end

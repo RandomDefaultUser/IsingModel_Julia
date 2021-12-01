@@ -21,7 +21,7 @@ module IsingMC
 #     boltzmannConstant = 1.0
 
     using Statistics
-#     using Plots
+    using Plots
     ####################
     # Definitions
     ####################
@@ -67,14 +67,22 @@ module IsingMC
 
     # Initialize the lattice of a simulation.
     # I know this is inefficient still.
-    function initialize(sim::MCSimulation)
+    function initialize(sim::MCSimulation, initType="random")
         for i in 1:sim.latticeSize
             for j in 1:sim.latticeSize
-                randomNumber = rand(0:1)
-                if randomNumber == 0
-                   randomNumber -= 1
+                if initType == "random"
+                    randomNumber = rand(0:1)
+                    if randomNumber == 0
+                       randomNumber -= 1
+                    end
+                    sim.lattice[i,j] = randomNumber
+                elseif initType == "negative"
+                   sim.lattice[i,j] = -1
+                elseif initType == "positive"
+                    sim.lattice[i,j] = 1
+                else
+                    throw(DomainError(initType, "Invalid initilization type"))
                 end
-                sim.lattice[i,j] = randomNumber
             end
         end
     end
@@ -106,9 +114,10 @@ module IsingMC
     end
 
     # Time evolve one lattice.
-    function timeEvolve(sim::MCSimulation)
+    function timeEvolve(sim::MCSimulation, printEnergies=false)
         averagedEnergy = 0.0
         energy = energyFromLattice(sim)
+        averagedEnergy = energy
         acceptedSteps = 1
         for step in 1:sim.stepsToEvolve
             # Determine which point in the lattice may be flipped.
@@ -135,7 +144,9 @@ module IsingMC
                 energy = energyFromLattice(sim)
                 acceptedSteps += 1
                 averagedEnergy = ((averagedEnergy*(acceptedSteps-1))+energy)/acceptedSteps
-#                 println("Accepted step, energy is now: ", energy)
+                if printEnergies == true
+                    println("Accepted step, energy is now: ", energy)
+                end
             else
                sim.lattice[xToFlip, yToFlip] *= -1
             end
@@ -159,20 +170,4 @@ module IsingMC
     # Tests
     ####################
 
-#     newSim = MCSimulation(2.0/boltzmannConstant, 20, 50000, 4.0)
-#     initialize(newSim)
-#     println(newSim)
-#     timeEvolve(newSim)
-#     println(newSim)
-#     visualizeSim(newSim)
-    temperatures = range(0.5, 10.0, step=0.5)
-    for temp in temperatures
-        energies = []
-        newSim = MCSimulation(temp/boltzmannConstant, 20, 50000, 4.0)
-        initialize(newSim)
-        energy = timeEvolve(newSim)
-        append!(energies, energy)
-        println(temp, " ", energy)
-    end
-#     println(energies)
 end

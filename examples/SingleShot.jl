@@ -8,7 +8,7 @@ temperature.
 include("../src/IsingMC.jl")
 using .IsingMC
 
-newSim = IsingMC.MCSimulation(2.0/IsingMC.boltzmannConstant, 20, 10000, 4.0)
-IsingMC.initialize(newSim, "positive")
-IsingMC.timeEvolve(newSim, true)
-IsingMC.visualizeSim(newSim)
+newSim = IsingMC.MCSimulation(7.0/IsingMC.boltzmannConstant, 20, 4.0)
+IsingMC.initialize(newSim, "negative")
+IsingMC.timeEvolve(newSim, 5000, true)
+IsingMC.performSimulation(newSim)

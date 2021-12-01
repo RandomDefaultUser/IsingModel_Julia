@@ -19,12 +19,7 @@ module IsingMC
     # Boltzmann constant in atomic units.
     boltzmannConstant =  8.617333262e10-5
 
-    mutable struct MCSimulation
-       temperatureK::Float64
-       latticeSize::UInt64
-       interactionStrength::Float64
-       lattice
-    end
+
     """
     Create a new MC simulation. The lattice array is created automatically.
 
@@ -33,9 +28,15 @@ module IsingMC
                              assumed.
     - `interactionStrength::Float64`: Strength of the spin interaction (for energy calculation)
     """
-    MCSimulation(temperatureK::Float64, latticeSize::UInt64, interactionStrength::Float64) =
-            MCSimulation(temperatureK, latticeSize, interactionStrength,
-                         zeros(Int64, latticeSize, latticeSize))
+    mutable struct MCSimulation
+       temperatureK::Float64
+       latticeSize::UInt64
+       interactionStrength::Float64
+       lattice
+    end
+    MCSimulation(temperatureK::Float64, latticeSize, interactionStrength::Float64) =
+                MCSimulation(temperatureK, latticeSize, interactionStrength,
+                              zeros(Int64, latticeSize, latticeSize))
 
     """
     Visualize the current state of a simulation. This is probably not the best way to do this,
@@ -71,11 +72,11 @@ module IsingMC
     Initialize a simulation.
 
     - `sim::MCSimulation`: The simulation to be initialized.
-    - `initType::string`: Type of initialization to be performed. Default "random", assgning
+    - `initType::String`: Type of initialization to be performed. Default "random", assgning
                            spins at random. "positive" or "negative" initializes the lattice
                            entirely with positive or negative spins, respectively.
     """
-    function initialize(sim::MCSimulation, initType::string="random")
+    function initialize(sim::MCSimulation, initType::String="random")
         for i in 1:sim.latticeSize
             for j in 1:sim.latticeSize
                 if initType == "random"
@@ -99,10 +100,10 @@ module IsingMC
     Calculate the local Hamiltonian around a lattice point.
 
     - `sim::MCSimulation`: The simulation which provides the lattice.
-    - `pointX::Int`: Lattice point X coordinate.
-    - `pointY::Int`: Lattice point Y coordinate.
+    - `pointX`: Lattice point X coordinate.
+    - `pointY`: Lattice point Y coordinate.
     """
-    function getLocalHamiltonian(sim::MCSimulation, pointX::Int, pointY::Int)
+    function getLocalHamiltonian(sim::MCSimulation, pointX, pointY)
        thisPoint = sim.lattice[pointX,pointY]
        localHamiltonian = 0.0
        # We assume periodic boundary conditions.
@@ -130,13 +131,13 @@ module IsingMC
     end
 
     """
-    For a given simulation, perform the "time" evolution.
+    Actually perform the simulation.
 
-    - `sim::MCSimulation`: The simulation for which the time evolution will be performed.
-    - `stepsToEvolve::UInt644`: Time steps this simulation is being evolved for.
-    - `printEnergies::bool`: If true, energies are printed during the simulation.
+    - `sim::MCSimulation`: The simulation object for which the simulation will be performed.
+    - `stepsToEvolve`: Steps this simulation is being evolved for.
+    - `printEnergies::Bool`: If true, energies are printed during the simulation.
     """
-    function timeEvolve(sim::MCSimulation, stepsToEvolve, printEnergies::bool=false)
+    function performSimulation(sim::MCSimulation, stepsToEvolve, printEnergies::Bool=false)
         averagedEnergy = 0.0
         energy = energyFromLattice(sim)
         averagedEnergy = energy

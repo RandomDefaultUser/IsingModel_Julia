@@ -136,12 +136,19 @@ module IsingMC
     - `sim::MCSimulation`: The simulation object for which the simulation will be performed.
     - `stepsToEvolve`: Steps this simulation is being evolved for.
     - `printEnergies::Bool`: If true, energies are printed during the simulation.
+    - `cutFirstSteps` : If unequal to zero, the first curFirstSteps will not be included in
+                        the averaging of the observables.
     """
-    function performSimulation(sim::MCSimulation, stepsToEvolve, printEnergies::Bool=false)
+    function performSimulation(sim::MCSimulation, stepsToEvolve, printEnergies::Bool=false,
+                               cutFirstSteps=0)
         averagedEnergy = 0.0
         energy = energyFromLattice(sim)
         averagedEnergy = energy
         acceptedSteps = 1
+        if stepsToEvolve >= cutFirstSteps
+            println("Cannot cut more steps then will be performed, ignoring cutFirstSteps.")
+            cutFirstSteps = 0
+        end
         for step in 1:stepsToEvolve
             # Determine which point in the lattice may be flipped.
             posToFlip = rand(0:((sim.latticeSize*sim.latticeSize)-1))
@@ -167,9 +174,11 @@ module IsingMC
             if accepted == true
                 energy = newEnergy
                 acceptedSteps += 1
-                averagedEnergy = ((averagedEnergy*(acceptedSteps-1))+energy)/acceptedSteps
-                if printEnergies == true
-                    println("Accepted step, energy is now: ", energy)
+                if step > cutFirstSteps
+                    averagedEnergy = ((averagedEnergy*(acceptedSteps-1))+energy)/acceptedSteps
+                    if printEnergies == true
+                        println("Accepted step, energy is now: ", energy)
+                    end
                 end
             else
                sim.lattice[xToFlip, yToFlip] *= -1

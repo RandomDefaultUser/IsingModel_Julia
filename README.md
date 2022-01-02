@@ -1,3 +1,6 @@
+# DISCLAIMER
+This repository is no longer actively developed or maintained.
+
 # IsingModel_Julia
 Small Julia+MC test on the Ising model. Includes a IsingMC.jl 
 with all the necessary routines and examples on how to use them.
@@ -6,10 +9,7 @@ Monte-Carlo method and Julia.
 
 ## Known limitations
 
-- Currently, only the energy is calculated
-- No steps are cut from the evaluation of the energy (i.e., 
-  during the equilibration phase, leading to larger required 
-  simulation "times")
-- no parallelization / speed optimization whatsoever
+- Only the energy is calculated, no other observable
+- no parallelization
 
 

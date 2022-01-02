@@ -10,5 +10,5 @@ using .IsingMC
 
 newSim = IsingMC.MCSimulation(7.0/IsingMC.boltzmannConstant, 20, 4.0)
 IsingMC.initialize(newSim, "negative")
-IsingMC.timeEvolve(newSim, 5000, true)
-IsingMC.performSimulation(newSim)
+IsingMC.performSimulation(newSim, 5000, true, 1000)
+IsingMC.visualizeSim(newSim)
